@@ -1,14 +1,14 @@
 import type { LatLng, LatLngExpression, LeafletMouseEvent } from 'leaflet'
 
 import { useState } from 'react'
-import { MapContainer, TileLayer, Polygon, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Polygon, useMap, Tooltip } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 
 import sectionMap from '../secciones-map.json'
 
-const data = sectionMap.data
+const data = sectionMap.data.getCoordinatesSections
 
-const initialPosition: LatLngExpression = [18.472113134457878, 3.597817222715871]
+const initialPosition: LatLngExpression = [19.542292820200803, 3.582170921357595]
 
 const purpleOptions = { color: 'purple' }
 
@@ -18,24 +18,18 @@ export interface Feature {
   geometry: Geometry
 }
 
+export interface FeatureProperties {}
+
 export interface Geometry {
   type: string
   coordinates: number[][]
-}
-
-export interface FeatureProperties {
-  BARRIO: string
-  COMUNA: number
-  PERIMETRO: number
-  AREA: number
-  OBJETO: string
 }
 
 export default function App() {
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<Feature | null>(null)
   const [selectedPosition, setSelectedPosition] = useState<LatLng | null>(null)
 
-  const handleClick = (neighborhood: Feature) => (event: LeafletMouseEvent) => {
+  const handleClick = (neighborhood: any) => (event: LeafletMouseEvent) => {
     setSelectedNeighborhood(neighborhood)
     setSelectedPosition(event.latlng)
   }
@@ -49,28 +43,22 @@ export default function App() {
             // url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
             url=''
           />
-          {data.map((feature) => {
-            // const coords = feature.geometry.coordinates.flat(2).map((c) => c.toReversed())
-            let coords
-
-            if (feature.geometry.type === 'Polygon') {
-              coords = feature.geometry.coordinates.flat().map((c) => c.toReversed())
-            } else {
-              coords = feature.geometry.coordinates.flat(2).map((c) => c.toReversed())
-            }
+          {data.map(({ geometryInFormatLatLong }) => {
+            const coords = geometryInFormatLatLong.map((coord) => coord.toReversed())
 
             return (
               <Polygon
                 eventHandlers={{
                   click: handleClick({
-                    ...feature,
-                    geometry: { ...feature.geometry, coordinates: coords },
+                    geometry: { coordinates: coords },
                   }),
                 }}
                 key={crypto.randomUUID()}
                 pathOptions={purpleOptions}
                 positions={coords as LatLngExpression[]}
-              />
+              >
+                <Tooltip sticky>Hola, soy un tooltip</Tooltip>
+              </Polygon>
             )
           })}
         </MapContainer>
